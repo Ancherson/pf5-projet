@@ -49,6 +49,16 @@ type program = block
 
 (***********************************************************************)
 
+let read_file (filename:string) : string list =
+  let ci = open_in filename in
+  let rec read ci = 
+    try 
+      let line = input_line ci in
+      line :: (read ci)
+    with End_of_file -> []
+  in read ci;;
+(***********************************************************************)
+
 let read_polish (filename:string) : program = failwith "TODO"
 
 let print_polish (p:program) : unit = failwith "TODO"
@@ -64,6 +74,17 @@ let main () =
   | [|_;"-reprint";file|] -> print_polish (read_polish file)
   | [|_;"-eval";file|] -> eval_polish (read_polish file)
   | _ -> usage ()
-
+;;
 (* lancement de ce main *)
-let () = main ()
+(*let () = main ()*)
+
+(***********************************************************************)
+(* Fonction de test *)
+let rec print_list_string l = 
+  match l with 
+  | [] -> print_newline()
+  | x :: ll -> print_string x; print_newline();print_list_string ll;;
+
+(** TEST *)
+let l = read_file "./exemples/abs.p";;
+print_list_string l;;
