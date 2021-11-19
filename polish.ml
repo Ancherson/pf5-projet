@@ -144,14 +144,14 @@ let print_bool b = print_string(string_of_bool b);print_newline();;
 
 let print_expr e = 
   let rec print_expr_aux e = match e with
-  | Var(a) -> print_string(a);print_string(" ");
-  | Num(x) -> print_int(x);print_string(" ");
+  | Var(a) -> print_string(a);
+  | Num(x) -> print_int(x);
   | Op(op, e1, e2) -> match op with 
-    | Add -> print_string("(");print_expr_aux(e1);print_string("+ ");print_expr_aux(e2);print_string(")");
-    | Sub -> print_string("(");print_expr_aux(e1);print_string("- ");print_expr_aux(e2);print_string(")");
-    | Mul -> print_string("(");print_expr_aux(e1);print_string("* ");print_expr_aux(e2);print_string(")");
-    | Div -> print_string("(");print_expr_aux(e1);print_string("/ ");print_expr_aux(e2);print_string(")");
-    | Mod -> print_string("(");print_expr_aux(e1);print_string("% ");print_expr_aux(e2);print_string(")");
+    | Add -> print_string("(");print_expr_aux(e1);print_string(" + ");print_expr_aux(e2);print_string(")");
+    | Sub -> print_string("(");print_expr_aux(e1);print_string(" - ");print_expr_aux(e2);print_string(")");
+    | Mul -> print_string("(");print_expr_aux(e1);print_string(" * ");print_expr_aux(e2);print_string(")");
+    | Div -> print_string("(");print_expr_aux(e1);print_string(" / ");print_expr_aux(e2);print_string(")");
+    | Mod -> print_string("(");print_expr_aux(e1);print_string(" % ");print_expr_aux(e2);print_string(")");
   in print_expr_aux e; print_newline();;
 
 (** TEST *)
