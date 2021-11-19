@@ -57,6 +57,52 @@ let read_file (filename:string) : string list =
       line :: (read ci)
     with End_of_file -> []
   in read ci;;
+
+
+let explode str =
+  let rec loop index acc =
+    if index < 0 then acc
+    else loop (index - 1) (str.[index] :: acc)
+  in
+  loop (String.length str - 1) []
+;;
+
+let rec is_in_list elt list = 
+  match list with
+  | [] -> false
+  | x :: tail -> (x = elt) || (is_in_list elt tail)
+
+let is_string_from_alpha (mot_string:string) (alpha_string:string) =
+  let rec is_string_from_alpha_list (mot:char list) (alpha:char list): bool = 
+    match mot with
+    | [] -> true
+    | x :: tail -> (is_in_list x alpha) && (is_string_from_alpha_list tail alpha)
+  in let mot = explode mot_string and alpha = explode alpha_string
+  in is_string_from_alpha_list mot alpha
+;;
+
+let is_number (mot:string) = is_string_from_alpha mot "0123456789"
+let is_operator (mot:string) = is_string_from_alpha mot "+-*/%"
+
+let rec read_expression (l:string list) : expr * string list =
+  match l with
+  | [] -> failwith "pbm" 
+  | x :: ll -> 
+    if is_number x then (Num(int_of_string x), ll)
+    else if is_operator x then
+      let (e1, lll) = read_expression ll in
+      let (e2, end_list) = read_expression lll in
+      match x with
+      | "+" -> (Op(Add, e1, e2), end_list)
+      | "-" -> (Op(Sub, e1, e2), end_list)
+      | "*" -> (Op(Mul, e1, e2), end_list)
+      | "/" -> (Op(Div, e1, e2), end_list)
+      | "%" -> (Op(Mod, e1, e2), end_list)
+      | _ -> failwith "pbm operator"
+    else (Var(x), ll)
+;;
+    
+
 (***********************************************************************)
 
 let read_polish (filename:string) : program = failwith "TODO"
@@ -76,7 +122,7 @@ let main () =
   | _ -> usage ()
 ;;
 (* lancement de ce main *)
-(*let () = main ()*)
+(* let () = main () *)
 
 (***********************************************************************)
 (* Fonction de test *)
@@ -85,6 +131,36 @@ let rec print_list_string l =
   | [] -> print_newline()
   | x :: ll -> print_string x; print_newline();print_list_string ll;;
 
+let rec print_list_char lc =
+  match lc with 
+  | [] -> print_newline()
+  | x :: ll -> print_char x; print_string(" ");print_list_char ll;;
+
+let string_of_bool b = 
+  if b then "true" else "false"
+;;
+
+let print_bool b = print_string(string_of_bool b);print_newline();;
+
+let print_expr e = 
+  let rec print_expr_aux e = match e with
+  | Var(a) -> print_string(a);print_string(" ");
+  | Num(x) -> print_int(x);print_string(" ");
+  | Op(op, e1, e2) -> match op with 
+    | Add -> print_string("(");print_expr_aux(e1);print_string("+ ");print_expr_aux(e2);print_string(")");
+    | Sub -> print_string("(");print_expr_aux(e1);print_string("- ");print_expr_aux(e2);print_string(")");
+    | Mul -> print_string("(");print_expr_aux(e1);print_string("* ");print_expr_aux(e2);print_string(")");
+    | Div -> print_string("(");print_expr_aux(e1);print_string("/ ");print_expr_aux(e2);print_string(")");
+    | Mod -> print_string("(");print_expr_aux(e1);print_string("% ");print_expr_aux(e2);print_string(")");
+  in print_expr_aux e; print_newline();;
+
 (** TEST *)
 let l = read_file "./exemples/abs.p";;
 print_list_string l;;
+
+let lc = explode "salut";;
+
+print_bool(is_string_from_alpha "158648613" "0123456789");;
+
+let (e,ll) = read_expression ["/"; "truc"; "*"; "+"; "bla";"2";"3"];;
+print_expr e;;
