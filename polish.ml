@@ -113,14 +113,12 @@ let count_first_space (line:string) :int =
     in
   count_first_space_rec 0 line;;
 
-let suppr_empty_string_list (l:string list) :string list =
-  let rec rec_suppr_empty_string_list acc (l:string list) :string list =
+let rec suppr_empty_string_list (l:string list) :string list =
     match l with
-    |[] -> acc
-    |x::tail -> if x = "" then rec_suppr_empty_string_list acc tail
-      else rec_suppr_empty_string_list (x::acc) tail
-    in
-  List.rev (rec_suppr_empty_string_list [] l);;
+    |[] -> []
+    |x::tail -> if x = "" then suppr_empty_string_list tail
+      else x::suppr_empty_string_list tail
+;;
   
 let get_line_elem_and_Nspace (s : string) : int * string list =
   (count_first_space s ,suppr_empty_string_list (String.split_on_char ' ' s ));;
