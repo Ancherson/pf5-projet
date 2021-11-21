@@ -101,6 +101,32 @@ let rec read_expression (l:string list) : expr * string list =
       | _ -> failwith "pbm operator"
     else (Var(x), ll)
 ;;
+
+let count_first_space (line:string) :int =
+  let size = String.length line in
+  let rec count_first_space_rec acc (line:string) :int=
+    if (acc < size) 
+      then if line.[acc] <> ' '
+        then acc 
+      else count_first_space_rec (acc+1) line
+    else -1
+    in
+  count_first_space_rec 0 line;;
+
+let suppr_empty_string_list (l:string list) :string list =
+  let rec rec_suppr_empty_string_list acc (l:string list) :string list =
+    match l with
+    |[] -> acc
+    |x::tail -> if x = "" then rec_suppr_empty_string_list acc tail
+      else rec_suppr_empty_string_list (x::acc) tail
+    in
+  List.rev (rec_suppr_empty_string_list [] l);;
+  
+let get_line_elem_and_Nspace (s : string) : int * string list =
+  (count_first_space s ,suppr_empty_string_list (String.split_on_char ' ' s ));;
+
+
+
     
 
 (***********************************************************************)
