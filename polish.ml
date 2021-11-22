@@ -124,26 +124,27 @@ let get_line_elem_and_Nspace (line : string) : int * string list =
   (count_first_space line ,suppr_empty_string_list (String.split_on_char ' ' line ));;
 
 
-let aux_read_comparaison (mots :string list) (first_expr :expr) (comparator : comp) : cond =
+let aux_read_condition (mots :string list) (first_expr :expr) (comparator : comp) : cond =
   let (last_expr,tail2) = read_expression mots in
   match tail2 with
   |[] -> (first_expr,comparator,last_expr)
   |_ -> failwith "not only a condition"
 ;;
 
-let read_comparaison (mots :string list)  : cond=
+let read_condition (mots :string list)  : cond=
   let (first_expr,tail1) = read_expression mots in
   match tail1 with 
   |[] -> failwith "No condition"
   |x::ll -> match x with
-    |"=" ->(*Equals *) aux_read_comparaison ll first_expr Eq
-    |"<" ->(*Inf *) aux_read_comparaison ll first_expr Lt
-    |">" ->(*Sup *) aux_read_comparaison ll first_expr Gt
-    |"<>" ->(*Diff *) aux_read_comparaison ll first_expr Ne
-    |"<=" ->(*Equals or inf *) aux_read_comparaison ll first_expr Le
-    |">=" ->(*Equals or sup *) aux_read_comparaison ll first_expr Ge
+    |"=" ->(*Equals *) aux_read_condition ll first_expr Eq
+    |"<" ->(*Inf *) aux_read_condition ll first_expr Lt
+    |">" ->(*Sup *) aux_read_condition ll first_expr Gt
+    |"<>" ->(*Diff *) aux_read_condition ll first_expr Ne
+    |"<=" ->(*Equals or inf *) aux_read_condition ll first_expr Le
+    |">=" ->(*Equals or sup *) aux_read_condition ll first_expr Ge
     | _ -> failwith "Not a condition"
 ;;
+
 
 
 
