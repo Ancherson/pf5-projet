@@ -72,6 +72,9 @@ let is_string_from_alpha (mot:string) (alpha:string) =
 
 let is_number (mot:string) = is_string_from_alpha mot "0123456789"
 let is_operator (mot:string) = is_string_from_alpha mot "+-*/%"
+let is_variable (mot:string) = 
+  List.for_all (fun elt -> (mot <> elt)) ["+"; "-"; "*"; "/"; "%"; "<"; ">"; "<="; ">="; "="; "<>"; ":="]
+  && (not (is_number mot));;
 
 let rec read_expression (l:string list) : expr * string list =
   match l with
@@ -88,6 +91,7 @@ let rec read_expression (l:string list) : expr * string list =
       | "/" -> (Op(Div, e1, e2), end_list)
       | "%" -> (Op(Mod, e1, e2), end_list)
       | _ -> failwith "pbm operator"
+    else if (List.exists (fun elt -> (elt = x)) ["<"; ">"; "<="; ">="; "="; "<>"; ":="]) then failwith "not a variable"
     else (Var(x), ll)
 ;;
 
@@ -134,10 +138,13 @@ let read_condition (mots :string list)  : cond=
     | _ -> failwith "Not a condition"
 ;;
 
-
-
-
-    
+let read_print (mots: string list) : instr = 
+  match mots with
+  | [] -> failwith "pbm print"
+  | l -> let (exp, rest) = read_expression l in
+         if rest <> [] then failwith "not an expression"
+         else Print(exp)
+             
 
 (***********************************************************************)
 
@@ -202,6 +209,7 @@ let l = read_file "./exemples/abs.p";;
 print_list_int_string l;;
 
 print_bool(is_string_from_alpha "158648613" "0123456789");;
+print_bool(is_variable "14a");;
 
 let (e,ll) = read_expression ["/"; "truc"; "*"; "+"; "bla";"2";"3"];;
 print_expr e;;
