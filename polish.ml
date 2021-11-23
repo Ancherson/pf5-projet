@@ -59,7 +59,7 @@ let read_file (filename:string) : (string * int) list =
   in read ci 1;;
 
 
-let is_string_from_alpha (mot:string) (alpha:string) =
+let is_string_from_alpha (mot:string) (alpha:string) (start:int) =
   let size_alpha = String.length alpha
   and size_mot = String.length mot in
   let rec is_string_from_alpha_loop i =
@@ -68,10 +68,13 @@ let is_string_from_alpha (mot:string) (alpha:string) =
       else ((alpha.[j] = c) || (is_in_string c (j+1)))
     in if i >= size_mot then true
     else ((is_in_string mot.[i] 0) && (is_string_from_alpha_loop (i+1)))
-  in is_string_from_alpha_loop 0;;
+  in is_string_from_alpha_loop start;;
 
-let is_number (mot:string) = is_string_from_alpha mot "0123456789"
-let is_operator (mot:string) = is_string_from_alpha mot "+-*/%"
+
+let is_number (mot:string) = 
+  if(mot.[0] = '-') then (mot <> "-") && is_string_from_alpha mot "0123456789" 1
+  else is_string_from_alpha mot "0123456789" 0;;
+let is_operator (mot:string) = List.exists (fun elt -> mot = elt) ["+"; "-"; "*"; "/"; "%"]
 let is_variable (mot:string) = 
   List.for_all (fun elt -> (mot <> elt)) ["+"; "-"; "*"; "/"; "%"; "<"; ">"; "<="; ">="; "="; "<>"; ":="]
   && (not (is_number mot));;
@@ -140,10 +143,18 @@ let read_condition (mots :string list)  : cond=
 
 let read_print (mots: string list) : instr = 
   match mots with
-  | [] -> failwith "pbm print"
+  | [] -> failwith "too few argument print"
   | l -> let (exp, rest) = read_expression l in
-         if rest <> [] then failwith "not an expression"
+         if rest <> [] then failwith "not an expression print"
          else Print(exp)
+             
+
+let read_read (mots: string list) : instr = 
+  match mots with
+  | [] -> failwith "too few argument read"
+  | x :: ll -> if ll <> [] then failwith "too much arguments read"
+               else if is_variable x then Read(x)
+               else failwith "not a variable read"
              
 
 (***********************************************************************)
@@ -208,7 +219,7 @@ let print_expr e =
 let l = read_file "./exemples/abs.p";;
 print_list_int_string l;;
 
-print_bool(is_string_from_alpha "158648613" "0123456789");;
+print_bool(is_number "-1");;
 print_bool(is_variable "14a");;
 
 let (e,ll) = read_expression ["/"; "truc"; "*"; "+"; "bla";"2";"3"];;
