@@ -179,15 +179,22 @@ let read_read (mots: string list) : instr =
 let read_set(mots: string list) : instr = 
   match mots with
   | [] -> failwith "not a set instruction 1"
-  | x1 :: ll -> if not (is_variable x1) then failwith "Error set, not a variable"
+  | x1 :: ll -> if not (is_variable x1) then failwith "not a set instruction 2"
     else
       match ll with
-      | [] -> failwith "not a set instruction 2"
-      | x2 :: lll -> if x2 <> ":=" then failwith "not a set instruction 3"
+      | [] -> failwith "not a set instruction 3"
+      | x2 :: lll -> if x2 <> ":=" then failwith "not a set instruction 4"
         else 
           let (ex, llll) = read_expression lll in
-          if llll <> [] then failwith "not a set instruction 4"
+          if llll <> [] then failwith "not a set instruction 5"
           else Set(x1, ex)
+
+let read_while (pro: int) (mots: string list) (lignes: (string * int) list) : instr * ((string * int) list)=
+  let condition = read_condition mots in
+  let block1,next = read_block (pro + 2) lignes in
+  (While(condition, block1), next)
+
+
 
              
 
