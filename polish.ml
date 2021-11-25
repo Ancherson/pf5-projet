@@ -119,10 +119,6 @@ let rec suppr_empty_string_list (l:string list) :string list =
 let get_line_elem_and_Nspace (line : string) : int * string list =
   (count_first_space line ,suppr_empty_string_list (String.split_on_char ' ' line ));;
 
-let read_instr (pro:int) (line: string list) (position: int) (next_lines: (string*int) list) : instr * (string * int) list=
-  (Read("test"), [("",0)])
-;;
-
 
 let rec read_block (pro : int) (lines : (string * int) list) :block * ((string * int) list) =
   match lines with
@@ -136,7 +132,30 @@ let rec read_block (pro : int) (lines : (string * int) list) :block * ((string *
       then failwith "Probleme indentation"
     else let (instruction, next_block_lines)= read_instr space_num line pos next_lines in
       let (block1,next_next) = read_block space_num next_block_lines in
-      (((pos,instruction)::block1 :block), (next_next : (string*int) list))
+      if instruction = None 
+        then ((block1 :block), (next_next: (string*int) list))
+      else (((pos,Option.get instruction)::block1 :block), (next_next : (string*int) list))
+
+and read_instr (pro:int) (line: string list) (position: int) (next_lines: (string*int) list) : 'instr option * (string * int) list=
+  match line with 
+  |[] -> failwith "Pb instruction"
+  |x::tail -> match x with 
+    |"COMMENT" -> (None,next_lines)
+    |"READ" -> if (List.tl tail) = [] 
+      then (Some (Read(List.hd tail)),next_lines)
+      else failwith ("trop d'arguments pour READ")
+    |"PRINT" -> let (expression,empty_list) = read_expression tail in
+      if empty_list = [] 
+        then (Some (Print(expression)),next_lines)
+      else failwith ("trop d'arguments pour PRINT")
+    |"ELSE" -> failwith "manque un IF"
+    |_ -> let variable = List.hd tail in
+      if (List.nth tail 1) = ":="
+        then let (expression,empty_list) = read_expression (List.tl (List.tl tail)) in
+        if empty_list = [] 
+          then (Some (Set(variable,expression)),next_lines)
+        else failwith ("trop d'arguments sur la ligne")
+      else failwith ("ce n'est pas une attribution de varirable")
 ;;
 
 
