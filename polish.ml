@@ -120,43 +120,7 @@ let get_line_elem_and_Nspace (line : string) : int * string list =
   (count_first_space line ,suppr_empty_string_list (String.split_on_char ' ' line ));;
 
 
-let rec read_block (pro : int) (lines : (string * int) list) :block * ((string * int) list) =
-  match lines with
-  | [] -> ([],[])
-  | (string_line,pos)::next_lines -> let (space_num,line) = get_line_elem_and_Nspace string_line in
-    if space_num < pro 
-      then if (space_num mod 2) = 0 
-        then ([],next_lines)
-      else failwith "Une ligne n'a pas de profondeur paire"
-    else if space_num > pro 
-      then failwith "Probleme indentation"
-    else let (instruction, next_block_lines)= read_instr space_num line pos next_lines in
-      let (block1,next_next) = read_block space_num next_block_lines in
-      if instruction = None 
-        then ((block1 :block), (next_next: (string*int) list))
-      else (((pos,Option.get instruction)::block1 :block), (next_next : (string*int) list))
 
-and read_instr (pro:int) (line: string list) (position: int) (next_lines: (string*int) list) : 'instr option * (string * int) list=
-  match line with 
-  |[] -> failwith "Pb instruction"
-  |x::tail -> match x with 
-    |"COMMENT" -> (None,next_lines)
-    |"READ" -> if (List.tl tail) = [] 
-      then (Some (Read(List.hd tail)),next_lines)
-      else failwith ("trop d'arguments pour READ")
-    |"PRINT" -> let (expression,empty_list) = read_expression tail in
-      if empty_list = [] 
-        then (Some (Print(expression)),next_lines)
-      else failwith ("trop d'arguments pour PRINT")
-    |"ELSE" -> failwith "manque un IF"
-    |_ -> let variable = List.hd tail in
-      if (List.nth tail 1) = ":="
-        then let (expression,empty_list) = read_expression (List.tl (List.tl tail)) in
-        if empty_list = [] 
-          then (Some (Set(variable,expression)),next_lines)
-        else failwith ("trop d'arguments sur la ligne")
-      else failwith ("ce n'est pas une attribution de varirable")
-;;
 
 
 let aux_read_condition (mots :string list) (first_expr :expr) (comparator : comp) : cond =
@@ -191,7 +155,7 @@ let read_print (mots: string list) : instr =
 let read_read (mots: string list) : instr = 
   match mots with
   | [] -> failwith "too few argument read"
-  | x :: ll -> if ll <> [] then failwith "too much arguments read"
+  | x :: empty_list -> if empty_list <> [] then failwith "too much arguments read"
                else if is_variable x then Read(x)
                else failwith "not a variable read"
 
@@ -204,17 +168,42 @@ let read_set(mots: string list) : instr =
       | [] -> failwith "not a set instruction 3"
       | x2 :: lll -> if x2 <> ":=" then failwith "not a set instruction 4"
         else 
-          let (ex, llll) = read_expression lll in
-          if llll <> [] then failwith "not a set instruction 5"
+          let (ex, empty_list) = read_expression lll in
+          if empty_list <> [] then failwith "not a set instruction 5"
           else Set(x1, ex)
 
-let read_while (pro: int) (mots: string list) (lignes: (string * int) list) : instr * ((string * int) list)=
+let rec read_block (pro : int) (lines : (string * int) list) :block * ((string * int) list) =
+  match lines with
+  | [] -> ([],[])
+  | (string_line,pos)::next_lines -> let (space_num,line) = get_line_elem_and_Nspace string_line in
+    if space_num < pro 
+      then if (space_num mod 2) = 0 
+        then ([],next_lines)
+      else failwith "Une ligne n'a pas de profondeur paire"
+    else if space_num > pro 
+      then failwith "Probleme indentation"
+    else let (instruction, next_block_lines)= read_instr space_num line pos next_lines in
+      let (block1,next_next) = read_block space_num next_block_lines in
+      if instruction = None 
+        then ((block1 :block), (next_next: (string*int) list))
+      else (((pos,Option.get instruction)::block1 :block), (next_next : (string*int) list))
+
+and read_instr (pro:int) (line: string list) (position: int) (next_lines: (string*int) list) : 'instr option * (string * int) list=
+  match line with 
+  |[] -> failwith "Pb instruction"
+  |x::tail -> match x with 
+    |"COMMENT" -> (None,next_lines)
+    |"READ" -> (Some (read_read tail),next_lines)
+    |"PRINT" -> (Some (read_print tail),next_lines)
+    |"ELSE" -> failwith "manque un IF"
+    |"While" -> let (while_instr,line_after_Wblock) = read_while pro tail next_lines in
+      (Some(while_instr),line_after_Wblock)
+    |_ -> (Some (read_set tail),next_lines)
+and read_while (pro: int) (mots: string list) (lignes: (string * int) list) : instr * ((string * int) list)=
   let condition = read_condition mots in
   let block1,next = read_block (pro + 2) lignes in
   (While(condition, block1), next)
-
-
-
+;;
              
 
 (***********************************************************************)
