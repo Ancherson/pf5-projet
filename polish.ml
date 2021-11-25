@@ -175,6 +175,20 @@ let read_read (mots: string list) : instr =
   | x :: ll -> if ll <> [] then failwith "too much arguments read"
                else if is_variable x then Read(x)
                else failwith "not a variable read"
+
+let read_set(mots: string list) : instr = 
+  match mots with
+  | [] -> failwith "not a set instruction 1"
+  | x1 :: ll -> if not (is_variable x1) then failwith "Error set, not a variable"
+    else
+      match ll with
+      | [] -> failwith "not a set instruction 2"
+      | x2 :: lll -> if x2 <> ":=" then failwith "not a set instruction 3"
+        else 
+          let (ex, llll) = read_expression lll in
+          if llll <> [] then failwith "not a set instruction 4"
+          else Set(x1, ex)
+
              
 
 (***********************************************************************)
