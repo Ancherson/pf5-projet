@@ -119,6 +119,26 @@ let rec suppr_empty_string_list (l:string list) :string list =
 let get_line_elem_and_Nspace (line : string) : int * string list =
   (count_first_space line ,suppr_empty_string_list (String.split_on_char ' ' line ));;
 
+let read_instr (pro:int) (line: string list) (position: int) (next_lines: (string*int) list) : instr * (string * int) list=
+  (Read("test"), [("",0)])
+;;
+
+
+let rec read_block (pro : int) (lines : (string * int) list) :block * ((string * int) list) =
+  match lines with
+  | [] -> ([],[])
+  | (string_line,pos)::next_lines -> let (space_num,line) = get_line_elem_and_Nspace string_line in
+    if space_num < pro 
+      then if (space_num mod 2) = 0 
+        then ([],next_lines)
+      else failwith "Une ligne n'a pas de profondeur paire"
+    else if space_num > pro 
+      then failwith "Probleme indentation"
+    else let (instruction, next_block_lines)= read_instr space_num line pos next_lines in
+      let (block1,next_next) = read_block space_num next_block_lines in
+      (((pos,instruction)::block1 :block), (next_next : (string*int) list))
+;;
+
 
 let aux_read_condition (mots :string list) (first_expr :expr) (comparator : comp) : cond =
   let (last_expr,tail2) = read_expression mots in
