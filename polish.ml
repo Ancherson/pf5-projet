@@ -172,21 +172,24 @@ let read_set(mots: string list) : instr =
           if empty_list <> [] then failwith "not a set instruction 5"
           else Set(x1, ex)
 
-let rec read_block (pro : int) (lines : (string * int) list) :block * ((string * int) list) =
+let rec read_block (pro : int) (lines : (string * int) list) (is_else: bool) :block * ((string * int) list) =
   match lines with
   | [] -> ([],[])
-  | (string_line,pos)::next_lines -> let (space_num,line) = get_line_elem_and_Nspace string_line in
+  | (string_line,pos)::next_lines -> 
+    let (space_num,line) = get_line_elem_and_Nspace string_line in
     if space_num < pro 
       then if (space_num mod 2) = 0 
         then ([],lines)
       else failwith "Une ligne n'a pas de profondeur paire"
     else if space_num > pro 
       then failwith "Probleme indentation"
+    else if is_else
+      then read_else pro line lines 
     else let (instruction, next_block_lines)= read_instr space_num line pos next_lines in
-      let (block1,next_next) = read_block space_num next_block_lines in
+      let (block1,next_next) = read_block space_num next_block_lines false in
       if instruction = None 
         then ((block1 :block), (next_next: (string*int) list))
-      else (((pos,Option.get instruction)::block1 :block), (next_next : (string*int) list))
+      else ((pos,Option.get instruction)::block1, next_next)
 
 and read_instr (pro:int) (line: string list) (position: int) (next_lines: (string*int) list) : 'instr option * (string * int) list=
   match line with 
@@ -198,13 +201,30 @@ and read_instr (pro:int) (line: string list) (position: int) (next_lines: (strin
     |"ELSE" -> failwith "manque un IF"
     |"WHILE" -> let (while_instr,line_after_Wblock) = read_while pro tail next_lines in
       (Some(while_instr),line_after_Wblock)
+    |"IF" -> let (if_instr, line_after_Iblock) = read_if pro tail next_lines in
+      (Some(if_instr), line_after_Iblock)
     |_ -> try 
       (Some (read_set line),next_lines)
       with Failure (s)-> print_string x; failwith "coucou"
 and read_while (pro: int) (mots: string list) (lignes: (string * int) list) : instr * ((string * int) list)=
   let condition = read_condition mots in
-  let block1,next = read_block (pro + 2) lignes in
+  let block1,next = read_block (pro + 2) lignes false in
   (While(condition, block1), next)
+
+and read_else (pro: int) (mots: string list) (lignes: (string * int) list) : block * ((string * int) list) = 
+  match mots with
+  | [] -> failwith "not else 1"
+  | x :: tail -> 
+    if(x = "ELSE" && tail = []) 
+      then read_block (pro + 2) (List.tl lignes) false
+    else read_block pro lignes false
+
+and read_if (pro: int) (mots: string list) (lignes: (string * int) list) : instr * ((string * int) list)=
+  let condition = read_condition mots in
+  let block1, next = read_block (pro + 2) lignes false in
+  let block2, next_next = read_block pro next true in
+  (If(condition, block1, block2), next_next)
+                      
 ;;
              
 
@@ -271,7 +291,7 @@ let print_expr e =
   in print_expr_aux e; print_newline();;
 
 (** TEST *)
-let l = read_file "./exemples/fact.p";;
+let l = read_file "./exemples/mult_russe.p";;
 print_list_int_string_super l;;
 
 print_bool(is_number "-1");;
@@ -279,4 +299,4 @@ print_bool(is_variable "14a");;
 
 let (e,ll) = read_expression ["/"; "truc"; "*"; "+"; "bla";"2";"3"];;
 print_expr e;;
-read_block 0 l;;
+read_block 0 l false;;
