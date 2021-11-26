@@ -178,7 +178,7 @@ let rec read_block (pro : int) (lines : (string * int) list) :block * ((string *
   | (string_line,pos)::next_lines -> let (space_num,line) = get_line_elem_and_Nspace string_line in
     if space_num < pro 
       then if (space_num mod 2) = 0 
-        then ([],next_lines)
+        then ([],lines)
       else failwith "Une ligne n'a pas de profondeur paire"
     else if space_num > pro 
       then failwith "Probleme indentation"
@@ -196,9 +196,11 @@ and read_instr (pro:int) (line: string list) (position: int) (next_lines: (strin
     |"READ" -> (Some (read_read tail),next_lines)
     |"PRINT" -> (Some (read_print tail),next_lines)
     |"ELSE" -> failwith "manque un IF"
-    |"While" -> let (while_instr,line_after_Wblock) = read_while pro tail next_lines in
+    |"WHILE" -> let (while_instr,line_after_Wblock) = read_while pro tail next_lines in
       (Some(while_instr),line_after_Wblock)
-    |_ -> (Some (read_set tail),next_lines)
+    |_ -> try 
+      (Some (read_set line),next_lines)
+      with Failure (s)-> print_string x; failwith "coucou"
 and read_while (pro: int) (mots: string list) (lignes: (string * int) list) : instr * ((string * int) list)=
   let condition = read_condition mots in
   let block1,next = read_block (pro + 2) lignes in
@@ -234,12 +236,16 @@ let rec print_list_string l =
   | [] -> print_newline()
   | x :: ll -> print_string x; print_newline();print_list_string ll;;
 
-let rec print_list_int_string l =
-  match l with
-  | [] -> print_newline()
-  | (s, x) :: ll -> print_int x;print_string(" "); 
-                    print_string s;print_newline(); 
-                    print_list_int_string ll;;
+let print_list_int_string_super l =
+  print_string "[";
+  let rec print_list_int_string l =
+    match l with
+    | [] -> print_string "]"
+    | (s, x) :: ll -> print_string "(\"";print_string s; print_string "\"";print_string(","); 
+                      print_int x;print_string ")"; print_string ";";
+                      print_list_int_string ll;
+  in print_list_int_string l;
+  print_newline();;
 
 let rec print_list_char lc =
   match lc with 
@@ -265,11 +271,12 @@ let print_expr e =
   in print_expr_aux e; print_newline();;
 
 (** TEST *)
-let l = read_file "./exemples/abs.p";;
-print_list_int_string l;;
+let l = read_file "./exemples/fact.p";;
+print_list_int_string_super l;;
 
 print_bool(is_number "-1");;
 print_bool(is_variable "14a");;
 
 let (e,ll) = read_expression ["/"; "truc"; "*"; "+"; "bla";"2";"3"];;
 print_expr e;;
+read_block 0 l;;
