@@ -1,3 +1,5 @@
+(** Toutes les exceptions + leurs fonctions associées *)
+
 exception Error_Read of (int * string)
 
 
