@@ -74,7 +74,7 @@ let print_expr e =
   in print_expr_aux e; print_newline();;
 
 (** TEST *)
-let l = read_file "./exemples/mult_russe.p";;
+let l = read_file "./exemples/abs.p";;
 print_list_int_string_super l;;
 
 print_bool(is_number "-1");;
