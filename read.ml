@@ -141,7 +141,7 @@ let read_set(mots: string list) (num_line: int) : instr =
       | x2 :: lll -> if x2 <> ":=" then raise(Error_Read (num_line, "Need := after the variable in a SET instruction !"))
         else 
           let (ex, empty_list) = read_expression lll num_line in
-          if empty_list <> [] then raise(Error_Read (num_line, "Need an expression after := !"))
+          if empty_list <> [] then raise(Error_Read (num_line, "Too much arguments in a SET instruction"))
           else Set(x1, ex)
 
 (** essaie de lire un bloc d'instruction de profondeur 'pro' dans la liste de lignes 'lines' 
