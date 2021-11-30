@@ -32,7 +32,8 @@ let is_number (mot:string) =
   else is_string_from_alpha mot "0123456789" 0;;
 
 (** indique si mot est un operateur *)
-let is_operator (mot:string) = List.exists (fun elt -> mot = elt) ["+"; "-"; "*"; "/"; "%"]
+let is_operator (mot:string) = 
+List.exists (fun elt -> mot = elt) ["+"; "-"; "*"; "/"; "%"]
 
 (** indique si mot peut être un nom de variable : 
     si ce n'est ni un nombre, ni un symbole utilisé pour une autre instruction *)
@@ -89,7 +90,8 @@ let get_line_elem_and_Nspace (line : string) : int * string list =
 
 (** fonction auxiliaire pour la fonction read_condition
     elle essaie de lire la deuxième expression dans une condition *)
-let aux_read_condition (mots :string list) (first_expr :expr) (comparator : comp) (num_line: int) : cond =
+let aux_read_condition (mots :string list) (first_expr :expr)
+ (comparator : comp) (num_line: int) : cond =
   let (last_expr,tail2) = read_expression mots num_line in
   match tail2 with
   |[] -> (first_expr,comparator,last_expr)
@@ -117,7 +119,8 @@ let read_print (mots: string list) (num_line: int) : instr =
   | [] -> raise(Error_Read (num_line, "Need argument after Print"))
   | l -> 
     let (exp, rest) = read_expression l num_line in
-    if rest <> [] then raise(Error_Read (num_line, "Too much argument after PRINT"))
+    if rest <> [] 
+    then raise(Error_Read (num_line, "Too much argument after PRINT"))
     else Print(exp)
              
 (** essaie de lire une instruction READ et la renvoie *)
@@ -134,19 +137,23 @@ let read_read (mots: string list) (num_line: int) : instr =
 let read_set(mots: string list) (num_line: int) : instr = 
   match mots with
   | [] -> raise(Error_Read (num_line, "Erreur set"))
-  | x1 :: ll -> if not (is_variable x1) then raise(Error_Read (num_line, "Not a variable name in the SET instruction !"))
+  | x1 :: ll -> if not (is_variable x1) 
+    then raise(Error_Read (num_line, "Not a variable name in the SET instruction !"))
     else
       match ll with
       | [] -> raise(Error_Read (num_line, "Not just a variable in a SET instruction !"))
-      | x2 :: lll -> if x2 <> ":=" then raise(Error_Read (num_line, "Need := after the variable in a SET instruction !"))
+      | x2 :: lll -> if x2 <> ":=" 
+        then raise(Error_Read (num_line, "Need := after the variable in a SET instruction !"))
         else 
           let (ex, empty_list) = read_expression lll num_line in
-          if empty_list <> [] then raise(Error_Read (num_line, "Too much arguments in a SET instruction"))
+          if empty_list <> [] 
+          then raise(Error_Read (num_line, "Too much arguments in a SET instruction"))
           else Set(x1, ex)
 
 (** essaie de lire un bloc d'instruction de profondeur 'pro' dans la liste de lignes 'lines' 
     le booléen 'is_else' indique si read_block doit lire un block else ou non*)
-let rec read_block (pro : int) (lines : (string * int) list) (is_else: bool) :block * ((string * int) list) =
+let rec read_block (pro : int) (lines : (string * int) list) 
+(is_else: bool) :block * ((string * int) list) =
   match lines with
   | [] -> ([],[])
   | (string_line,pos)::next_lines -> 
@@ -167,7 +174,8 @@ let rec read_block (pro : int) (lines : (string * int) list) (is_else: bool) :bl
 
 (** essaie de lire l'instruction contenue dans line de profondeur pro
     renvoie cette instruction + la liste des lignes restantes à lire *)
-and read_instr (pro:int) (line: string list) (position: int) (next_lines: (string*int) list) : 'instr option * (string * int) list=
+and read_instr (pro:int) (line: string list) (position: int) 
+(next_lines: (string*int) list) : 'instr option * (string * int) list=
   match line with 
   |[] -> raise(Error_Read (position, "Erreur empty line !"))
   |x::tail -> match x with 
@@ -175,7 +183,8 @@ and read_instr (pro:int) (line: string list) (position: int) (next_lines: (strin
     |"READ" -> (Some (read_read tail position),next_lines)
     |"PRINT" -> (Some (read_print tail position),next_lines)
     |"ELSE" -> raise(Error_Read (position, "ELSE without IF precendently !"))
-    |"WHILE" -> let (while_instr,line_after_Wblock) = read_while pro tail next_lines position in
+    |"WHILE" -> let (while_instr,line_after_Wblock) = 
+    read_while pro tail next_lines position in
       (Some(while_instr),line_after_Wblock)
     |"IF" -> let (if_instr, line_after_Iblock) = read_if pro tail next_lines position in
       (Some(if_instr), line_after_Iblock)
@@ -183,14 +192,16 @@ and read_instr (pro:int) (line: string list) (position: int) (next_lines: (strin
 
 (** essaie de lire une instruction WHILE
     renvoie cette instruction + la liste de lignes restantes *)
-and read_while (pro: int) (mots: string list) (lignes: (string * int) list) (num_line: int) : instr * ((string * int) list)=
-  let condition = read_condition mots num_line in
-  let block1,next = read_block (pro + 2) lignes false in
+and read_while (pro: int) (mots: string list) 
+(lignes: (string * int) list) (num_line: int) : instr * ((string * int) list)=
+  let condition = read_condition mots num_line and 
+  block1,next = read_block (pro + 2) lignes false in
   (While(condition, block1), next)
 
 (** essaie de lire un block ELSE, si y'en a un
     renvoie le block si ELSE si il existe *)
-and read_else (pro: int) (mots: string list) (lignes: (string * int) list) (num_line: int) : block * ((string * int) list) = 
+and read_else (pro: int) (mots: string list)  (lignes: (string * int) list)
+ (num_line: int) : block * ((string * int) list) = 
   match mots with
   | [] -> raise(Error_Read (num_line, "Erreur ELSE"))
   | x :: tail -> 
@@ -199,9 +210,10 @@ and read_else (pro: int) (mots: string list) (lignes: (string * int) list) (num_
     else ([], lignes)
 
 (** essaie de lire une instruction IF et renvoie ce IF *)
-and read_if (pro: int) (mots: string list) (lignes: (string * int) list) (num_line: int) : instr * ((string * int) list)=
-  let condition = read_condition mots num_line in
-  let block1, next = read_block (pro + 2) lignes false in
+and read_if (pro: int) (mots: string list) (lignes: (string * int) list) 
+(num_line: int) : instr * ((string * int) list)=
+  let condition = read_condition mots num_line 
+  and block1, next = read_block (pro + 2) lignes false in
   let block2, next_next = read_block pro next true in
   (If(condition, block1, block2), next_next)
                       
