@@ -2,15 +2,12 @@
 
 exception Error_Read of (int * string)
 
+let get_string_error_read (e: (int * string)) : string =
+    match e with
+    | (n, s) ->
+        "Error line " ^ (string_of_int n) ^ " : " ^ s ^ "\n"
+;;
 
-let check_error_read f = 
-    try 
-        Some(f())
-    with Error_Read (num_line, message) -> 
-        print_string "Error line ";
-        print_int num_line;
-        print_string " : ";
-        print_string message;
-        print_newline();
-        None;
+let print_error_read (e: (int * string)) : unit = 
+    print_string (get_string_error_read e)
 ;;
