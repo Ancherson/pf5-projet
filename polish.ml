@@ -23,7 +23,10 @@ let read_polish (filename:string) : program =
 
 let print_polish (p:program) : unit = print_string (print_block "" p);;
 
-let eval_polish (p:program) : unit = failwith "TODO"
+let print_polish (p:program) : unit = print_string (print_block "" p);;
+
+let eval_polish (p:program) : unit = eval_prog(p)
+;;
 
 let usage () =
   print_string "Polish : analyse statique d'un mini-langage\n";
