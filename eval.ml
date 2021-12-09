@@ -1,5 +1,6 @@
 (** Toutes les fonctions pour l'evaluation d'un programme polish *)
 open Type;;
+open My_exception;;
 
 
 module Env = Map.Make (String) ;;
@@ -9,9 +10,9 @@ let eval_op (o:op) :int -> int -> int =
     |Add -> (fun n1 n2 -> n1 + n2 )
     |Sub -> (fun n1 n2 ->  n1 - n2)
     |Mul -> (fun n1 n2 -> n1 * n2 )
-    |Div -> (fun n1 n2 -> if n2 = 0 then failwith "division by zero"
+    |Div -> (fun n1 n2 -> if n2 = 0 then raise (Error_Eval "division by zero")
         else n1 / n2)
-    |Mod -> (fun n1 n2 -> if n2 = 0 then failwith "division by zero"
+    |Mod -> (fun n1 n2 -> if n2 = 0 then raise (Error_Eval "division by zero")
         else n1 mod (n2))
 ;;
 
@@ -46,14 +47,14 @@ let eval_set (set:instr) (env: int Env.t) : int Env.t=
            let env = Env.remove name env in
            let env = Env.add name num env in
            env
-    |_ -> failwith "not a Set"
+    |_ -> raise (Error_Eval "Should be a Set")
 ;;
 
 let eval_print (print:instr) (env: int Env.t) :unit=
     match print with
     |Print(exp) -> print_int (eval_expr exp env);
         print_string "\n"
-    |_ -> failwith "not a Print"
+    |_ -> raise (Error_Eval "Should be a Print")
 ;;
 
 let eval_read (read : instr) (env: int Env.t) : int Env.t =
@@ -67,7 +68,7 @@ let eval_read (read : instr) (env: int Env.t) : int Env.t =
            let env = Env.remove s env in
            let env = Env.add s num env in
            env
-    | _ -> failwith "not a read"
+    | _ -> raise (Error_Eval "Should be a read")
 ;;
 
 let rec eval_block (bloc : block) (env : int Env.t) : int Env.t = 
@@ -90,7 +91,7 @@ and eval_if (ins : instr) (env : int Env.t) : int Env.t =
     | If(con, b1, b2) ->
         if eval_cond con env then eval_block b1 env
         else eval_block b2 env
-    | _ -> failwith "not a if"
+    | _ -> raise (Error_Eval "Should be  a if")
 
 and eval_while (ins : instr) (env : int Env.t) = 
     match ins with
@@ -100,7 +101,7 @@ and eval_while (ins : instr) (env : int Env.t) =
                 then while_loop co bloc (eval_block bloc env)
                 else env
         in while_loop con b env
-    | _ -> failwith "not a while"
+    | _ -> raise (Error_Eval "Should be a while")
         
 
 let eval_prog (p : program) : unit =

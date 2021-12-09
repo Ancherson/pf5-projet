@@ -1,6 +1,7 @@
 (** Toutes les exceptions + leurs fonctions associées *)
 
 exception Error_Read of (int * string)
+exception Error_Eval of (string)
 
 let get_string_error_read (e: (int * string)) : string =
     match e with

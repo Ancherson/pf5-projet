@@ -1,4 +1,5 @@
 open Type;;
+open Eval;;
 
 let simple_plus (ex1:expr) (ex2:expr) : expr =
     match (ex1, ex2) with
@@ -12,7 +13,7 @@ let simple_moins (ex1:expr) (ex2:expr) : expr =
     match (ex1, ex2) with
     | (Num(a), Num(b)) -> Num(a - b)
     | (Num(a), ex2) when a = 0 -> ex2
-    | (ex1, ex2) when ex1 = ex2 -> 0
+    | (ex1, ex2) when ex1 = ex2 -> Num(0)
     | (ex1, ex2) -> Op(Sub, ex1, ex2)
 ;;
 
@@ -20,7 +21,7 @@ let simple_fois (ex1:expr) (ex2:expr) : expr =
     match (ex1, ex2) with
     | (Num(a), Num(b)) -> Num(a * b)
     | (Num(a), ex2) when a = 0 -> Num(0)
-    | (ex1, Num(a)) when b = 0 -> Num(0)
+    | (ex1, Num(a)) when a = 0 -> Num(0)
     | (Num(a), ex2) when a = 1 -> ex2
     | (ex1, Num(b)) when b = 1 -> ex1
     | (ex1, ex2) -> Op(Mul, ex1, ex2)
@@ -61,7 +62,7 @@ let rec simple_expr (ex:expr) : expr =
 ;;
 
 let simple_cond (co:cond) : cond = 
-    match cond with 
+    match co with 
     | (e1, com, e2) -> (simple_expr e1, com, simple_expr e2)
 ;;
 
@@ -72,13 +73,15 @@ let test_cond (co:cond) : bool option =
 ;;
 
 let simple_print (ins:instr) : instr = 
-    match instr with
+    match ins with
     | Print(e) -> Print(simple_expr e)
+    | _ -> failwith "pb print"
 ;;
 
 let simple_set (ins:instr) : instr =
-    match instr with
+    match ins with
     | Set(n, e) -> Set(n, simple_expr e)
+    | _ -> failwith "pb set"
 ;;
 
 (* let simple_if (ins:instr) : instr = 
