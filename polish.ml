@@ -25,7 +25,11 @@ let print_polish (p:program) : unit = print_string (print_block "" p);;
 
 let print_polish (p:program) : unit = print_string (print_block "" p);;
 
-let eval_polish (p:program) : unit = eval_prog(p)
+let print_polish (p:program) : unit = print_string (print_block "" p);;
+
+let eval_polish (p:program) : unit =
+  try eval_prog(p)
+  with Error_Eval (n,s) -> print_error_eval(n,s); exit 1;
 ;;
 
 let usage () =
