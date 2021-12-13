@@ -84,6 +84,36 @@ let simple_set (ins:instr) : instr =
     | _ -> failwith "pb set"
 ;;
 
-(* let simple_if (ins:instr) : instr = 
-    match instr with
-    | If(co, b1, b2) -> if(test) *)
+let rec simple_block (b:block) : block =
+    match b with
+    | [] -> []
+    | (num, ins) :: tail -> (simple_instr ins num) @ (simple_block tail)
+
+and simple_instr (ins:instr) (num:int) : block = 
+    match ins with
+    | Set(_,_) -> [(num, simple_set ins)]
+    | Read(_) -> [(num, ins)]
+    | Print(_) -> [(num, simple_print ins)]
+    | If(_,_,_) -> simple_if ins num
+    | While(_,_) -> simple_while ins num
+
+and simple_if (ins:instr) (num:int) : block = 
+    match ins with
+    | If(co, b1, b2) ->
+        (let co_simp = simple_cond co in
+        match test_cond co_simp with 
+        | None -> [(num,If(co_simp, simple_block b1, simple_block b2))]
+        | Some(b) -> if b then simple_block b1 else simple_block b2)
+    | _ -> failwith "pb simple if"
+
+and simple_while (ins:instr) (num:int) : block = 
+    match ins with
+    | While(co, bloc) -> 
+        (let co_simp = simple_cond co in
+        match test_cond co_simp with
+        | None -> [(num, While(co_simp, simple_block bloc))]
+        | Some(b) -> 
+            if b then [(num, While(co_simp, simple_block bloc))] (* BOUCLE INFINI *)
+            else [])
+    | _ -> failwith "pb simple while"
+
