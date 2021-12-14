@@ -3,12 +3,12 @@ RAPPORT PROJET PF5
 
 # Indentifiants
  - ROUGEOLLE Yoan @rougeoll 21953845
- - CHERION Jules @cherion 
+ - CHERION Jules @cherion 21961980
 
 # Fonctionnalités
- - Convertit la syntaxe concrète polish en syntaxe abstraite. Lorsque la syntaxe concrète n'est pas respecté, affiche un message d'erreur indiquant la ligne où se trouve le problème
+ - Convertit la syntaxe concrète polish en syntaxe abstraite. Lorsque la syntaxe concrète n'est pas respectée, affiche un message d'erreur indiquant la ligne où se trouve le problème
  - Réaffiche la syntaxe abstraite en polish
- - Evalue un programme polish. Lorsqu'une variable est non initialisé ou que une opération arithmétique interdite est effectué, affiche un message d'erreur indiquant la ligne où se trouve le problème
+ - Evalue un programme polish. Lorsqu'une variable est non initialisé ou qu'ne opération arithmétique interdite est effectuée, affiche un message d'erreur indiquant la ligne où se trouve le problème
   
 # Compilation et Execution
 
