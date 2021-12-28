@@ -150,7 +150,7 @@ let read_set(mots: string list) (num_line: int) : instr =
           then raise(Error_Read (num_line, "Too much arguments in a SET instruction"))
           else Set(x1, ex)
 
-(** essaie de lire un bloc d'instruction de profondeur 'pro' dans la liste de lignes 'lines' 
+(* essaie de lire un bloc d'instruction de profondeur 'pro' dans la liste de lignes 'lines' 
     le booléen 'is_else' indique si read_block doit lire un block else ou non*)
 let rec read_block (pro : int) (lines : (string * int) list) 
 (is_else: bool) :block * ((string * int) list) =
@@ -158,16 +158,23 @@ let rec read_block (pro : int) (lines : (string * int) list)
   | [] -> ([],[])
   | (string_line,pos)::next_lines -> 
     let (space_num,line) = get_line_elem_and_Nspace string_line in
+    (*On récupère ici la ligne sous la forme d'une string list et la profondeur de la ligne *)
     if space_num < pro 
       then if (space_num mod 2) = 0 
+        (*fin du block qu'on lisait *)
         then ([],lines)
       else raise(Error_Read (pos, "Error indentation not an even !"))
     else if space_num > pro 
       then raise(Error_Read (pos, "Error indentation too deep !"))
     else if is_else
+      (*cas de lecture d'un else *)
       then read_else pro line lines pos
+    (*lecture de l'intruction sur la ligne, si on a un while ou un if alors on fait appel à
+     rea_block dans read_instr pour construire l'instr while ou if. Une fois cela fini on continu
+     la lecture du block en cours*)
     else let (instruction, next_block_lines)= read_instr space_num line pos next_lines in
       let (block1,next_next) = read_block space_num next_block_lines false in
+      (*On vérifie que l'intruction ne soit pas un Comment pour l'ignorer lors de notre lecture*)
       if instruction = None 
         then ((block1 :block), (next_next: (string*int) list))
       else ((pos,Option.get instruction)::block1, next_next)

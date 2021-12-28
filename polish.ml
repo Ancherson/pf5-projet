@@ -9,6 +9,7 @@ open Type;;
 open Read;;
 open Print;;
 open Eval;;
+open Simp;;
     
 
 (***********************************************************************)
@@ -27,8 +28,12 @@ let print_polish (p:program) : unit = print_string (print_block "" p);;
 
 let print_polish (p:program) : unit = print_string (print_block "" p);;
 
-let eval_polish (p:program) : unit = eval_prog(p)
+let eval_polish (p:program) : unit =
+  try eval_prog(p)
+  with Error_Eval (n,s) -> print_error_eval(n,s); exit 1;
 ;;
+
+let simp_polish (p:program) : program = simple_block p 
 
 let usage () =
   print_string "Polish : analyse statique d'un mini-langage\n";
@@ -38,6 +43,7 @@ let main () =
   match Sys.argv with
   | [|_;"-reprint";file|] -> print_polish (read_polish file)
   | [|_;"-eval";file|] -> eval_polish (read_polish file)
+  | [|_;"-simpl";file|] -> print_polish (simp_polish (read_polish file))
   | _ -> usage ()
 ;;
 (* lancement de ce main *)
@@ -71,7 +77,6 @@ let string_of_bool b =
 ;;
 
 let print_bool b = print_string(string_of_bool b);print_newline();;
-
 
 (** TEST *)
 (* let l = read_file "./exemples/abs.p";;
