@@ -38,3 +38,5 @@ and block = (position * instr) list
 
 (** Un programme Polish est un bloc d'instructions *)
 type program = block
+
+type sign = Pos | Neg | Zero | Error
