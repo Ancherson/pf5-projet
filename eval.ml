@@ -3,8 +3,6 @@ open Type;;
 open My_exception;;
 
 
-module Env = Map.Make (String) ;;
-
 let eval_op (o:op) (line : int):int -> int -> int =
     match o with
     |Add -> (fun n1 n2 -> n1 + n2 )

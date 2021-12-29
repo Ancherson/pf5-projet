@@ -47,7 +47,7 @@ let main () =
   | _ -> usage ()
 ;;
 (* lancement de ce main *)
-let () = main () ;;
+(*let () = main () ;;*)
 
 (***********************************************************************)
 (* Fonction de test *)

@@ -40,3 +40,5 @@ and block = (position * instr) list
 type program = block
 
 type sign = Pos | Neg | Zero | Error
+
+module Env = Map.Make (String) ;;

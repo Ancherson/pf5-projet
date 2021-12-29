@@ -127,3 +127,19 @@ let not_equal (s1 : sign) (s2 : sign) : bool list =
     List.map (fun x -> not x) equal s1 s2
 ;;
 
+let op_sign (op : ope) = 
+    match ope with
+    | Add -> compute add
+    | Sub -> compute sub
+    | Mul -> compute mul
+    | Div -> compute div
+    | Mod -> compute modulo
+;;
+
+let rec sign_expr (e : expr) (env : (sign list) Env.t) : sign list =
+    match e with 
+    | Num(n) -> if n > 0 then [Pos] else if n = 0 then [Zero] else [Neg]
+    | Var(x) -> Env.find x env (* Peut y avoir une erreur ! *) 
+    | (ope, e1, e2) -> (op_sign ope) (sign_expr e1) (sign_expr e2)
+;;
+
