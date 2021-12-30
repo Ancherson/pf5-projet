@@ -161,3 +161,27 @@ let possible_cond (c : cond) (env : (sign list) Env.t) : bool list =
     | (e1, com, e2) -> (comp_possible com) (sign_expr e1 env) (sign_expr e2 env)
 ;;
 
+let sign_read (ins : instr) (env : (sign list) Env.t) : (sign list) Env.t =
+    match ins with
+    | Read(name) -> 
+        if not(Env.mem name env) then let env = Env.add name [Pos; Zero; Neg] env in
+           env
+        else
+           let env = Env.remove name env in
+           let env = Env.add name [Pos; Zero; Neg] env in
+           env
+    | _ -> failwith "Error sign not read"
+;;
+
+let sign_set (ins : instr) (env : (sign list) Env.t) : (sign list) Env.t =
+    match ins with
+    | Set(name, e) -> 
+        if not(Env.mem name env) then let env = Env.add name (sign_expr e env) env in
+           env
+        else
+           let env = Env.remove name env in
+           let env = Env.add name (sign_expr e env) env in
+           env
+    | _ -> failwith "Error sign not set"
+;;
+
