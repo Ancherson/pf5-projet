@@ -185,3 +185,64 @@ let sign_set (ins : instr) (env : (sign list) Env.t) : (sign list) Env.t =
     | _ -> failwith "Error sign not set"
 ;;
 
+let propa_comp_aux (co : comp) (s1 : sign) (s2 : sign) : sign list =
+    match co with 
+    | Eq -> if(List.mem true (equal s1 s2)) then [s1] else []
+    | Ne -> if(List.mem true (not_equal s1 s2)) then [s1] else []
+    | Gt -> if(List.mem true (greater s1 s2)) then [s1] else []
+    | Ge -> if(List.mem true (greater_equal s1 s2)) then [s1] else []
+    | Lt -> if(List.mem true (less s1 s2)) then [s1] else []
+    | Le -> if(List.mem true (less_equal s1 s2)) then [s1] else []
+;;
+
+let propa_comp (s1 : sign list) (s2 : sign list) (co : comp) : sign list =
+    compute (propa_comp_aux co) s1 s2
+;;
+
+
+let reverse_comp (c : comp) : comp =
+    match c with
+    | Eq -> Eq
+    | Ne -> Ne
+    | Gt -> Lt
+    | Lt -> Gt
+    | Le -> Ge
+    | Ge -> Le
+;;
+
+let reverse_cond (co : cond) : cond =
+    match co with
+    | (e1, com, e2) -> (e2, reverse_comp com, e1)
+;;
+
+let inverse_comp (c : comp) : comp =
+     match c with
+    | Eq -> Ne
+    | Ne -> Eq
+    | Gt -> Le
+    | Lt -> Ge
+    | Le -> Gt
+    | Ge -> Lt
+;;
+
+let inverse_cond (co : cond) : cond =
+    match co with
+    | (e1, com, e2) -> (e1, inverse_comp com, e2)
+;;
+
+let propa_sign_aux (x : name) (co : comp) (e2 : expr) (env : (sign list) Env.t) : (sign list) Env.t =
+    let s1 = Env.find x env in
+    let s2 = sign_expr e2 env in
+    let possible = propa_comp s1 s2 co in
+    let env = Env.remove x env in
+    let env = Env.add x possible env in env
+
+
+let rec propa_sign (co : cond) (env : (sign list) Env.t) : (sign list) Env.t =
+    match co with
+    | (Var(x), com, Var(y)) -> 
+        let env = propa_sign_aux x com (Var(y)) env in
+        let env = propa_sign_aux y (reverse_comp com) (Var(x)) env in env
+    | (Var(x), com, e2) -> propa_sign_aux x com e2 env
+    | (e1, com, Var(y)) -> propa_sign (reverse_cond co) env
+    | _ -> env
