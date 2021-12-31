@@ -45,10 +45,11 @@ let main () =
   | [|_;"-reprint";file|] -> print_polish (read_polish file)
   | [|_;"-eval";file|] -> eval_polish (read_polish file)
   | [|_;"-simpl";file|] -> print_polish (simp_polish (read_polish file))
+  | [|_;"-sign";file|] -> print_map_sign (sign_block (read_polish file) (Env.empty))
   | _ -> usage ()
 ;;
 (* lancement de ce main *)
-(*let () = main () ;;*)
+let () = main () ;;
 
 (***********************************************************************)
 (* Fonction de test *)
@@ -77,7 +78,11 @@ let string_of_bool b =
   if b then "true" else "false"
 ;;
 
-let print_bool b = print_string(string_of_bool b);print_newline();;
+let print_bool b = print_string(string_of_bool b);;
+let rec print_list_bool l =
+  match l with
+  | [] -> print_newline()
+  | x :: ll -> print_bool x; print_string(" "); print_list_bool ll;;
 
 (** TEST *)
 (* let l = read_file "./exemples/abs.p";;

@@ -161,7 +161,7 @@ let possible_cond (c : cond) (env : (sign list) Env.t) : bool list =
     | (e1, com, e2) -> (comp_possible com) (sign_expr e1 env) (sign_expr e2 env)
 ;;
 
-let sign_read (ins : instr) (env : (sign list) Env.t) : (sign list) Env.t =
+let sign_read (ins : instr) (env : (sign list) Env.t) (line : int) : (sign list) Env.t =
     match ins with
     | Read(name) -> 
         if not(Env.mem name env) then let env = Env.add name [Pos; Zero; Neg] env in
@@ -173,7 +173,7 @@ let sign_read (ins : instr) (env : (sign list) Env.t) : (sign list) Env.t =
     | _ -> failwith "Error sign not read"
 ;;
 
-let sign_set (ins : instr) (env : (sign list) Env.t) : (sign list) Env.t =
+let sign_set (ins : instr) (env : (sign list) Env.t) (line : int) : (sign list) Env.t =
     match ins with
     | Set(name, e) -> 
         if not(Env.mem name env) then let env = Env.add name (sign_expr e env) env in
@@ -246,3 +246,43 @@ let rec propa_sign (co : cond) (env : (sign list) Env.t) : (sign list) Env.t =
     | (Var(x), com, e2) -> propa_sign_aux x com e2 env
     | (e1, com, Var(y)) -> propa_sign (reverse_cond co) env
     | _ -> env
+
+
+let rec sign_block (bloc : block) (env : (sign list) Env.t) : (sign list) Env.t = 
+    match bloc with
+    | [] -> env
+    | (num,inst)::tail ->
+        let env = (sign_instr inst env num) in
+        sign_block tail env
+
+and sign_instr (ins : instr) (env : (sign list) Env.t) (line : int): (sign list) Env.t =
+    match ins with
+    | Set(_,_) -> sign_set ins env line
+    | Read(_) -> sign_read ins env line
+    | Print(_) -> env
+    | _ -> failwith "TODO"
+    (*| If(_,_,_) -> 
+    | While(_,_) -> *)
+;;
+
+let print_sign (s : sign) : unit =
+    match s with
+    | Pos -> print_string("+")
+    | Neg -> print_string("-")
+    | Zero -> print_string("0")
+    | Error -> print_string("!")
+;;
+
+let rec print_list f l : unit =
+    match l with
+    | [] -> print_newline()
+    | x :: ll -> (f x);print_list f ll
+;;
+
+let print_list_sign l = print_list (print_sign) l
+;;
+
+let print_elt_map_sign (key : name) (v : sign list) = 
+    print_string (key ^ " ");print_list_sign v;;
+
+let print_map_sign (env : (sign list) Env.t) = Env.iter print_elt_map_sign env;;
