@@ -84,9 +84,7 @@ let rec print_list_bool l =
   | [] -> print_newline()
   | x :: ll -> print_bool x; print_string(" "); print_list_bool ll;;
 
-(** TEST *)
-(* let l = read_file "./exemples/abs.p";;
-print_list_int_string_super l;;
-let p = read_polish "./exemples/fibo.p" in
-print_polish p;; *)
-(*check_error_read (fun () -> read_block 0 l false);;*)
+let print_couple_sign x = 
+  match x with
+  | (s1,s2) -> print_string("(");print_sign s1;print_string(",");print_sign(s2);print_string(") ")
+;;

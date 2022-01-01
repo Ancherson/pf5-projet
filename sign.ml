@@ -1,5 +1,28 @@
 open Type;;
 
+let print_sign (s : sign) : unit =
+    match s with
+    | Pos -> print_string("+")
+    | Neg -> print_string("-")
+    | Zero -> print_string("0")
+    | Error -> print_string("!")
+;;
+
+
+let rec print_list f l : unit =
+    match l with
+    | [] -> print_newline()
+    | x :: ll -> (f x);print_list f ll
+;;
+
+let print_list_sign l = print_list (print_sign) l
+;;
+
+let print_elt_map_sign (key : name) (v : sign list) = 
+    print_string (key ^ " ");print_list_sign v;;
+
+let print_map_sign (env : (sign list) Env.t) = Env.iter print_elt_map_sign env;;
+
 let inverse_sign (s : sign) : sign =
     match s with
     | Pos -> Neg
@@ -27,16 +50,17 @@ let rec inter l1 l2 =
         else inter ll l2
 ;;
 
-let rec aux_compute f s1 l2 =
+let rec aux_compute f same s1 l2 =
     match l2 with
     | [] -> []
-    | s2 :: ll2 -> union (f s1 s2) (aux_compute f s1 ll2)
+    | s2 :: ll2 -> 
+        union ((fun s1 s2 -> if s1 = s2 then f s1 s2 else []) s1 s2) (aux_compute f same s1 ll2)
 ;;
 
-let rec compute f l1 l2 =
+let rec compute f same l1 l2 =
     match l1 with 
     | [] -> []
-    | s1 :: ll1 -> union (aux_compute f s1 l2) (compute f ll1 l2)
+    | s1 :: ll1 -> union (aux_compute f same s1 l2) (compute f same ll1 l2)
 ;;
 
 
@@ -49,7 +73,6 @@ let add (s1 : sign) (s2 : sign) : sign list =
     | (ss1, ss2) when ss2 = Zero -> [ss1]
     | (_,_) -> [Pos; Zero; Neg]
 ;;
-
 
 let sub (s1 : sign) (s2 : sign) : sign list =
     List.rev (add s1 (inverse_sign s2))
@@ -83,7 +106,7 @@ let modulo (s1 : sign) (s2 : sign) : sign list =
 ;;
 
 let less (s1 : sign) (s2 : sign) : bool list =
-    if s1 = Error || s2 = Error then [false]
+    if s1 = Error || s2 = Error then [true; false]
     else if s1 = Pos 
         then if s2 = Pos then [true; false]
         else [false]
@@ -99,7 +122,7 @@ let greater_equal (s1 : sign) (s2 : sign) : bool list =
 ;;
 
 let less_equal (s1 : sign) (s2 : sign) : bool list =
-    if s1 = Error || s2 = Error then [false]
+    if s1 = Error || s2 = Error then [true; false]
     else if s1 = Pos 
         then if s2 = Pos then [true; false]
         else [false]
@@ -115,7 +138,7 @@ let greater (s1 : sign) (s2 : sign) : bool list =
 ;;
 
 let equal (s1 : sign) (s2 : sign) : bool list = 
-    if s1 = Error || s2 = Error then [false]
+    if s1 = Error || s2 = Error then [true; false]
     else if s1 = Pos then if s2 = Pos
         then [true; false]
         else [false]
@@ -131,34 +154,35 @@ let not_equal (s1 : sign) (s2 : sign) : bool list =
     List.map (fun x -> not x) (equal s1 s2)
 ;;
 
-let op_sign (ope : op) = 
+let op_sign (ope : op) (same : bool) = 
     match ope with
-    | Add -> compute add
-    | Sub -> compute sub
-    | Mul -> compute mul
-    | Div -> compute div
-    | Mod -> compute modulo
+    | Add -> compute add same
+    | Sub -> compute sub same
+    | Mul -> compute mul same
+    | Div -> compute div same
+    | Mod -> compute modulo same
 ;;
+
 
 let rec sign_expr (e : expr) (env : (sign list) Env.t) : sign list =
     match e with 
     | Num(n) -> if n > 0 then [Pos] else if n = 0 then [Zero] else [Neg]
     | Var(x) -> Env.find x env (* Peut y avoir une erreur ! *) 
-    | Op(ope, e1, e2) -> (op_sign ope) (sign_expr e1 env) (sign_expr e2 env)
+    | Op(ope, e1, e2) -> (op_sign ope (e1 = e2)) (sign_expr e1 env) (sign_expr e2 env)
 ;;
 
-let comp_possible (c : comp) = 
+let comp_possible (c : comp) (same : bool) = 
     match c with 
-    | Eq -> compute equal
-    | Ne -> compute not_equal
-    | Lt -> compute less
-    | Le -> compute less_equal
-    | Gt -> compute greater
-    | Ge -> compute greater_equal
+    | Eq -> if same then (fun s1 s2 -> [true]) else compute equal same
+    | Ne -> if same then (fun s1 s2 -> [false]) else compute not_equal same
+    | Lt -> if same then (fun s1 s2 -> [false]) else compute less same
+    | Le -> if same then (fun s1 s2 -> [true]) else compute less_equal same
+    | Gt -> if same then (fun s1 s2 -> [false]) else compute greater same
+    | Ge -> if same then (fun s1 s2 -> [true]) else compute greater_equal same
  
 let possible_cond (c : cond) (env : (sign list) Env.t) : bool list =
     match c with 
-    | (e1, com, e2) -> (comp_possible com) (sign_expr e1 env) (sign_expr e2 env)
+    | (e1, com, e2) -> (comp_possible com (e1 = e2)) (sign_expr e1 env) (sign_expr e2 env)
 ;;
 
 let sign_read (ins : instr) (env : (sign list) Env.t) (line : int) : (sign list) Env.t =
@@ -179,8 +203,9 @@ let sign_set (ins : instr) (env : (sign list) Env.t) (line : int) : (sign list) 
         if not(Env.mem name env) then let env = Env.add name (sign_expr e env) env in
            env
         else
+           let s = sign_expr e env in
            let env = Env.remove name env in
-           let env = Env.add name (sign_expr e env) env in
+           let env = Env.add name s env in
            env
     | _ -> failwith "Error sign not set"
 ;;
@@ -195,8 +220,8 @@ let propa_comp_aux (co : comp) (s1 : sign) (s2 : sign) : sign list =
     | Le -> if(List.mem true (less_equal s1 s2)) then [s1] else []
 ;;
 
-let propa_comp (s1 : sign list) (s2 : sign list) (co : comp) : sign list =
-    compute (propa_comp_aux co) s1 s2
+let propa_comp (s1 : sign list) (s2 : sign list) (co : comp) (same : bool) : sign list =
+    compute (propa_comp_aux co) same s1 s2
 ;;
 
 
@@ -233,7 +258,7 @@ let inverse_cond (co : cond) : cond =
 let propa_sign_aux (x : name) (co : comp) (e2 : expr) (env : (sign list) Env.t) : (sign list) Env.t =
     let s1 = Env.find x env in
     let s2 = sign_expr e2 env in
-    let possible = propa_comp s1 s2 co in
+    let possible = propa_comp s1 s2 co (Var(x) = e2) in
     let env = Env.remove x env in
     let env = Env.add x possible env in env
 
@@ -270,29 +295,24 @@ and sign_instr (ins : instr) (env : (sign list) Env.t) (line : int): (sign list)
     | Set(_,_) -> sign_set ins env line
     | Read(_) -> sign_read ins env line
     | Print(_) -> env
+    | If(_,_,_) -> sign_if ins env line
     | _ -> failwith "TODO"
-    (*| If(_,_,_) -> 
-    | While(_,_) -> *)
+    (*| While(_,_) -> *)
+
+and sign_if (ins : instr) (env : (sign list) Env.t) (line : int) : (sign list) Env.t =
+    match ins with
+    | If(con, b_if, b_else) ->
+        let is_possible = possible_cond con env in
+        if List.mem true is_possible then
+            let env1 = propa_sign con env in
+            let env1 = sign_block b_if env1 in
+            if List.mem false is_possible  then
+                let env2 = propa_sign (inverse_cond con) env in
+                let env2 = sign_block b_else env2 in map_join env1 env2
+            else env1
+        else if List.mem false is_possible  then
+            let env = propa_sign (inverse_cond con) env in
+            let env = sign_block b_else env in env
+        else env
+    | _ -> failwith "Error sign if, not a if !" 
 ;;
-
-let print_sign (s : sign) : unit =
-    match s with
-    | Pos -> print_string("+")
-    | Neg -> print_string("-")
-    | Zero -> print_string("0")
-    | Error -> print_string("!")
-;;
-
-let rec print_list f l : unit =
-    match l with
-    | [] -> print_newline()
-    | x :: ll -> (f x);print_list f ll
-;;
-
-let print_list_sign l = print_list (print_sign) l
-;;
-
-let print_elt_map_sign (key : name) (v : sign list) = 
-    print_string (key ^ " ");print_list_sign v;;
-
-let print_map_sign (env : (sign list) Env.t) = Env.iter print_elt_map_sign env;;
