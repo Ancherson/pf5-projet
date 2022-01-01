@@ -45,7 +45,8 @@ let main () =
   | [|_;"-reprint";file|] -> print_polish (read_polish file)
   | [|_;"-eval";file|] -> eval_polish (read_polish file)
   | [|_;"-simpl";file|] -> print_polish (simp_polish (read_polish file))
-  | [|_;"-sign";file|] -> print_map_sign (sign_block (read_polish file) (Env.empty))
+  | [|_;"-sign";file|] -> let (env, res) = (sign_block (read_polish file) (Env.empty)) in
+      print_map_sign env; print_string res; print_newline();
   | _ -> usage ()
 ;;
 (* lancement de ce main *)

@@ -1,5 +1,17 @@
 open Type;;
 
+
+let string_of_bool b = 
+  if b then "true" else "false"
+;;
+
+let print_bool b = print_string(string_of_bool b);;
+let rec print_list_bool l =
+  match l with
+  | [] -> print_newline()
+  | x :: ll -> print_bool x; print_string(" "); print_list_bool ll;;
+;;
+
 let print_sign (s : sign) : unit =
     match s with
     | Pos -> print_string("+")
@@ -54,7 +66,7 @@ let rec aux_compute f same s1 l2 =
     match l2 with
     | [] -> []
     | s2 :: ll2 -> 
-        union ((fun s1 s2 -> if s1 = s2 then f s1 s2 else []) s1 s2) (aux_compute f same s1 ll2)
+        union ((fun s1 s2 -> if ((not same) || (same && s1 = s2)) then f s1 s2 else []) s1 s2) (aux_compute f same s1 ll2)
 ;;
 
 let rec compute f same l1 l2 =
@@ -171,6 +183,12 @@ let rec sign_expr (e : expr) (env : (sign list) Env.t) : sign list =
     | Op(ope, e1, e2) -> (op_sign ope (e1 = e2)) (sign_expr e1 env) (sign_expr e2 env)
 ;;
 
+let if_error_cond (co : cond) (env : (sign list) Env.t) : bool =
+    match co with
+    | (e1, com, e2) -> (List.mem Error (sign_expr e1 env) || List.mem Error (sign_expr e2 env))
+;;
+
+
 let comp_possible (c : comp) (same : bool) = 
     match c with 
     | Eq -> if same then (fun s1 s2 -> [true]) else compute equal same
@@ -183,31 +201,6 @@ let comp_possible (c : comp) (same : bool) =
 let possible_cond (c : cond) (env : (sign list) Env.t) : bool list =
     match c with 
     | (e1, com, e2) -> (comp_possible com (e1 = e2)) (sign_expr e1 env) (sign_expr e2 env)
-;;
-
-let sign_read (ins : instr) (env : (sign list) Env.t) (line : int) : (sign list) Env.t =
-    match ins with
-    | Read(name) -> 
-        if not(Env.mem name env) then let env = Env.add name [Pos; Zero; Neg] env in
-           env
-        else
-           let env = Env.remove name env in
-           let env = Env.add name [Pos; Zero; Neg] env in
-           env
-    | _ -> failwith "Error sign not read"
-;;
-
-let sign_set (ins : instr) (env : (sign list) Env.t) (line : int) : (sign list) Env.t =
-    match ins with
-    | Set(name, e) -> 
-        if not(Env.mem name env) then let env = Env.add name (sign_expr e env) env in
-           env
-        else
-           let s = sign_expr e env in
-           let env = Env.remove name env in
-           let env = Env.add name s env in
-           env
-    | _ -> failwith "Error sign not set"
 ;;
 
 let propa_comp_aux (co : comp) (s1 : sign) (s2 : sign) : sign list =
@@ -281,38 +274,70 @@ let map_join (env1 : (sign list) Env.t) (env2 : (sign list) Env.t) : (sign list)
     Env.union join_aux env1 env2
 ;;
 
+let sign_read (ins : instr) (env : (sign list) Env.t) (line : int) : (sign list) Env.t =
+    match ins with
+    | Read(name) -> 
+        if not(Env.mem name env) then let env = Env.add name [Pos; Zero; Neg] env in
+           env
+        else
+           let env = Env.remove name env in
+           let env = Env.add name [Pos; Zero; Neg] env in
+           env
+    | _ -> failwith "Error sign not read"
+;;
+
+let sign_set (ins : instr) (env : (sign list) Env.t) (line : int) : ((sign list) Env.t) * string =
+    match ins with
+    | Set(name, e) -> 
+        let s = sign_expr e env in
+        if not(Env.mem name env) then let env = Env.add name s env in
+           (env, if List.mem Error s then "divbyzero " ^ (string_of_int line) else "safe")
+        else
+           let env = Env.remove name env in
+           let env = Env.add name s env in
+           (env, if List.mem Error s then "divbyzero " ^ (string_of_int line) else "safe")
+    | _ -> failwith "Error sign not set"
+;;
 
 
-let rec sign_block (bloc : block) (env : (sign list) Env.t) : (sign list) Env.t = 
+let sign_print (ins : instr) (env : (sign list) Env.t) (line : int) : ((sign list) Env.t) * string =
+    match ins with
+    |Print(e) -> if List.mem Error (sign_expr e env) then (env, "divbyzero " ^ (string_of_int line)) else (env, "safe")
+    | _ -> failwith "Error sign_print not print"
+
+let rec sign_block (bloc : block) (env : (sign list) Env.t) : ((sign list) Env.t) * string = 
     match bloc with
-    | [] -> env
+    | [] -> (env, "safe")
     | (num,inst)::tail ->
-        let env = (sign_instr inst env num) in
-        sign_block tail env
+        let (env, st1) = (sign_instr inst env num) in
+        let (env_fin, st2) = sign_block tail env in
+        (env_fin, if st1 = "safe" then st2 else st1)
 
-and sign_instr (ins : instr) (env : (sign list) Env.t) (line : int): (sign list) Env.t =
+and sign_instr (ins : instr) (env : (sign list) Env.t) (line : int): ((sign list) Env.t) * string =
     match ins with
     | Set(_,_) -> sign_set ins env line
-    | Read(_) -> sign_read ins env line
-    | Print(_) -> env
+    | Read(_) -> (sign_read ins env line, "safe")
+    | Print(_) -> sign_print ins env line
     | If(_,_,_) -> sign_if ins env line
     | _ -> failwith "TODO"
     (*| While(_,_) -> *)
 
-and sign_if (ins : instr) (env : (sign list) Env.t) (line : int) : (sign list) Env.t =
+and sign_if (ins : instr) (env : (sign list) Env.t) (line : int) : ((sign list) Env.t) * string =
     match ins with
     | If(con, b_if, b_else) ->
+        let is_error = if_error_cond con env in
+        let res = if is_error then "divbyzero " ^ (string_of_int line) else "safe" in
         let is_possible = possible_cond con env in
         if List.mem true is_possible then
             let env1 = propa_sign con env in
-            let env1 = sign_block b_if env1 in
+            let (env1, res1) = sign_block b_if env1 in
             if List.mem false is_possible  then
                 let env2 = propa_sign (inverse_cond con) env in
-                let env2 = sign_block b_else env2 in map_join env1 env2
-            else env1
+                let (env2, res2) = sign_block b_else env2 in (map_join env1 env2, if res <> "safe" then res else if res1 <> "safe" then res2 else res1)
+            else (env1, if res <> "safe" then res else res1)
         else if List.mem false is_possible  then
             let env = propa_sign (inverse_cond con) env in
-            let env = sign_block b_else env in env
-        else env
+            let (env, res1) = sign_block b_else env in (env, if res <> "safe" then res else res1)
+        else (env, res)
     | _ -> failwith "Error sign if, not a if !" 
 ;;
