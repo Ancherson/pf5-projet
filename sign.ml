@@ -248,6 +248,16 @@ let rec propa_sign (co : cond) (env : (sign list) Env.t) : (sign list) Env.t =
     | _ -> env
 
 
+let join_aux (key : name) (v1 : sign list) (v2 : sign list) : (sign list) option =
+    Some(union v1 v2)
+;;
+
+let map_join (env1 : (sign list) Env.t) (env2 : (sign list) Env.t) : (sign list) Env.t =
+    Env.union join_aux env1 env2
+;;
+
+
+
 let rec sign_block (bloc : block) (env : (sign list) Env.t) : (sign list) Env.t = 
     match bloc with
     | [] -> env
