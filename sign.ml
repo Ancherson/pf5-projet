@@ -319,8 +319,7 @@ and sign_instr (ins : instr) (env : (sign list) Env.t) (line : int): ((sign list
     | Read(_) -> (sign_read ins env line, "safe")
     | Print(_) -> sign_print ins env line
     | If(_,_,_) -> sign_if ins env line
-    | _ -> failwith "TODO"
-    (*| While(_,_) -> *)
+    | While(_,_) -> sign_while ins env line
 
 and sign_if (ins : instr) (env : (sign list) Env.t) (line : int) : ((sign list) Env.t) * string =
     match ins with
@@ -340,4 +339,19 @@ and sign_if (ins : instr) (env : (sign list) Env.t) (line : int) : ((sign list) 
             let (env, res1) = sign_block b_else env in (env, if res <> "safe" then res else res1)
         else (env, res)
     | _ -> failwith "Error sign if, not a if !" 
+
+and sign_while (ins : instr) (env : (sign list) Env.t) (line : int) : ((sign list) Env.t) * string =
+    match ins with
+    | While(con, b) ->
+        let rec sign_while_aux (con : cond) (pre_env : (sign list) Env.t) (line : int) =
+            let is_error = if_error_cond con pre_env in
+            let pre_res = if is_error then "divbyzero " ^ (string_of_int line) else "safe" in
+            let env = propa_sign con env in
+            let env, res = sign_block b env in
+            if env = pre_env then (env, if pre_res <> "safe" then pre_res else res)
+            else  let env, ret = sign_while_aux con env line
+            in (env, if pre_res <> "safe" then pre_res else if res <> "safe" then res else ret)
+        in let env, res = sign_while_aux con env line in
+        (propa_sign (inverse_cond con) env, res)
+    | _ -> failwith "Error sign while, not a while !"
 ;;
