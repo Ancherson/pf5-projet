@@ -348,6 +348,7 @@ and sign_while (ins : instr) (env : (sign list) Env.t) (line : int) : ((sign lis
             let pre_res = if is_error then "divbyzero " ^ (string_of_int line) else "safe" in
             let env = propa_sign con env in
             let env, res = sign_block b env in
+            let env = map_join pre_env env in
             if env = pre_env then (env, if pre_res <> "safe" then pre_res else res)
             else  let env, ret = sign_while_aux con env line
             in (env, if pre_res <> "safe" then pre_res else if res <> "safe" then res else ret)
