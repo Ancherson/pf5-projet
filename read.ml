@@ -71,7 +71,7 @@ let count_first_space (line:string) :int =
       then if line.[acc] <> ' '
         then acc 
       else count_first_space_rec (acc+1) line
-    else -1
+    else 0
     in
   count_first_space_rec 0 line;;
 

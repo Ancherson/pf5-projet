@@ -10,7 +10,8 @@ open Read;;
 open Print;;
 open Eval;;
 open Simp;;
-    
+open Sign;;    
+
 
 (***********************************************************************)
 
@@ -44,6 +45,8 @@ let main () =
   | [|_;"-reprint";file|] -> print_polish (read_polish file)
   | [|_;"-eval";file|] -> eval_polish (read_polish file)
   | [|_;"-simpl";file|] -> print_polish (simp_polish (read_polish file))
+  | [|_;"-sign";file|] -> let (env, res) = (sign_block (read_polish file) (Env.empty)) in
+      print_map_sign env; print_string res; print_newline();
   | _ -> usage ()
 ;;
 (* lancement de ce main *)
@@ -76,11 +79,13 @@ let string_of_bool b =
   if b then "true" else "false"
 ;;
 
-let print_bool b = print_string(string_of_bool b);print_newline();;
+let print_bool b = print_string(string_of_bool b);;
+let rec print_list_bool l =
+  match l with
+  | [] -> print_newline()
+  | x :: ll -> print_bool x; print_string(" "); print_list_bool ll;;
 
-(** TEST *)
-(* let l = read_file "./exemples/abs.p";;
-print_list_int_string_super l;;
-let p = read_polish "./exemples/fibo.p" in
-print_polish p;; *)
-(*check_error_read (fun () -> read_block 0 l false);;*)
+let print_couple_sign x = 
+  match x with
+  | (s1,s2) -> print_string("(");print_sign s1;print_string(",");print_sign(s2);print_string(") ")
+;;
