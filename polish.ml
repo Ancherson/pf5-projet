@@ -10,7 +10,8 @@ open Read;;
 open Print;;
 open Eval;;
 open Simp;;
-open Sign;;    
+open Sign;;
+open Vars;;    
 
 
 (***********************************************************************)
@@ -45,6 +46,7 @@ let main () =
   | [|_;"-reprint";file|] -> print_polish (read_polish file)
   | [|_;"-eval";file|] -> eval_polish (read_polish file)
   | [|_;"-simpl";file|] -> print_polish (simp_polish (read_polish file))
+  | [|_;"-vars";file|] -> vars_polish (read_polish file)
   | [|_;"-sign";file|] -> let (env, res) = (sign_block (read_polish file) (Env.empty)) in
       print_map_sign env; print_string res; print_newline();
   | _ -> usage ()

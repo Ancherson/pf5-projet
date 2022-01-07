@@ -25,7 +25,7 @@ let rec eval_expr (ex : expr) (env: int Env.t) (line : int) :int =
 let eval_comp (com : comp) : int -> int -> bool =
     match com with 
     | Eq -> (fun x y -> x = y)
-    | Ne -> (fun x y -> x <> y) 
+    | Ne -> (fun x y -> x <> y)
     | Lt -> (fun x y -> x < y)
     | Le -> (fun x y -> x <= y)
     | Gt -> (fun x y -> x > y)
