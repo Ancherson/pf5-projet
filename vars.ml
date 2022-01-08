@@ -31,7 +31,8 @@ let inter_map (env1:int Env.t) (env2:int Env.t) :int Env.t =
 
 
 let print_elt_int (key : string) (v : int) = 
-  print_string (key ^ " ");print_int v; print_string("\n");;
+  print_string (key ^ " ")
+  ;;
 
 (* affiche tout l'environnement de signes *)
 let print_map_int (env : (int) Env.t) = Env.iter print_elt_int env;;
@@ -99,4 +100,7 @@ and vars_if (i:instr) (env : (int) Env.t) : int Env.t=
     
 let vars_polish (b:block) : unit =
     let env = vars_block b Env.empty in
-    print_map_int env ;;
+    let no_pb = Env.filter  ( fun n k-> k <> 1 ) env in
+    let pb = Env.filter  ( fun n k-> k = 1 ) env in
+    print_map_int no_pb; print_string "\n"; print_map_int pb; print_string "\n";
+    ;;
