@@ -39,7 +39,12 @@ let simp_polish (p:program) : program = simple_block p
 
 let usage () =
   print_string "Polish : analyse statique d'un mini-langage\n";
-  print_string "usage: à documenter (TODO)\n"
+  print_string " usage : ./run -reprint \"Polish_path\" -> reprint le langage polish\n";
+  print_string "    or : ./run -eval    \"Polish_path\" -> execute le langage polish\n";
+  print_string "    or : ./run -simpl   \"Polish_path\" -> simplifie le langage polish\n";
+  print_string "    or : ./run -vars    \"Polish_path\" -> liste les variables utilisees et non initialisees\n";
+  print_string "    or : ./run -sign    \"Polish_path\" -> donne les signes potentiels des variables\n";
+;;
 
 let main () =
   match Sys.argv with
