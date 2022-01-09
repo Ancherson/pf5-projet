@@ -48,6 +48,15 @@ let rec union l1 l2 =
         if List.mem x l2 then union ll l2
         else union ll (x :: l2)
 ;;
+let rec inclu l1 l2 =
+match l1 with
+|[] -> true
+|x::tail -> List.mem x l2 && inclu tail l2 
+;;
+
+let equal_list l1 l2 =
+inclu l1 l2 && inclu l2 l1
+;;
 
 (* fonction auxiliaire de la fonction compute *)
 let rec aux_compute f same s1 l2 =
@@ -386,7 +395,7 @@ and sign_while (ins : instr) (env : (sign list) Env.t) (line : int) : ((sign lis
             let env = propa_sign con env in
             let env, res = sign_block b env in
             let env = map_join pre_env env in
-            if env = pre_env then (env, if pre_res <> "safe" then pre_res else res)
+            if Env.equal equal_list env pre_env then (env, if pre_res <> "safe" then pre_res else res)
             else  let env, ret = sign_while_aux con env line
             in (env, if pre_res <> "safe" then pre_res else if res <> "safe" then res else ret)
         in let env, res = sign_while_aux con env line in
