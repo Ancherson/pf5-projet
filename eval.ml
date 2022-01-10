@@ -2,7 +2,7 @@
 open Type;;
 open My_exception;;
 
-
+(* Foncion qui évalue les opérateurs *)
 let eval_op (o:op) (line : int):int -> int -> int =
     match o with
     |Add -> (fun n1 n2 -> n1 + n2 )
@@ -14,6 +14,7 @@ let eval_op (o:op) (line : int):int -> int -> int =
         else n1 mod (n2))
 ;;
 
+(*fontion qui évalue une expression *)
 let rec eval_expr (ex : expr) (env: int Env.t) (line : int) :int =
     match ex with
     |Num x -> x
@@ -22,6 +23,7 @@ let rec eval_expr (ex : expr) (env: int Env.t) (line : int) :int =
         with Not_found -> raise (Error_Eval (line,"variable "^x^" not initialized"))
 ;;
 
+(*fonction qui évalue les comparateurs *)
 let eval_comp (com : comp) : int -> int -> bool =
     match com with 
     | Eq -> (fun x y -> x = y)
@@ -31,12 +33,13 @@ let eval_comp (com : comp) : int -> int -> bool =
     | Gt -> (fun x y -> x > y)
     | Ge -> (fun x y -> x >= y)
 
+(*fonction qui évalue les conditions *)
 let eval_cond (co : cond) (env: int Env.t) (line : int) : bool =
     match co with
     | (e1, com, e2) -> (eval_comp com) (eval_expr e1 env line) (eval_expr e2 env line)
 
-(*à chaque appel de eval_set faire :
-let env = eval_set xxxx env;; *)
+(*fonction qui évalue un set en modifiant ou 
+en ajoutant la variable dans l'environnement *)
 let eval_set (set:instr) (env: int Env.t) (line : int): int Env.t=
     match set with
     |Set(name,exp) -> let num = eval_expr exp env line in
@@ -49,6 +52,8 @@ let eval_set (set:instr) (env: int Env.t) (line : int): int Env.t=
     |_ -> failwith "Error eval Set"
 ;;
 
+(*fonction qui évalue un print,
+affiche sur le terminal la valeur de l'expression *)
 let eval_print (print:instr) (env: int Env.t) (line : int) :unit=
     match print with
     |Print(exp) -> print_int (eval_expr exp env line);
@@ -56,6 +61,8 @@ let eval_print (print:instr) (env: int Env.t) (line : int) :unit=
     |_ -> failwith "Error eval Print"
 ;;
 
+(*fonction qui évalue un read en modifiant ou 
+en ajoutant la variable dans l'environnement*)
 let eval_read (read : instr) (env: int Env.t) : int Env.t =
     match read with
     | Read(s) ->   
@@ -70,6 +77,7 @@ let eval_read (read : instr) (env: int Env.t) : int Env.t =
     | _ -> failwith "Error eval Read"
 ;;
 
+(*fonction qui évalue un bloc *)
 let rec eval_block (bloc : block) (env : int Env.t) : int Env.t = 
     match bloc with
     | [] -> env
@@ -77,6 +85,7 @@ let rec eval_block (bloc : block) (env : int Env.t) : int Env.t =
         let env = (eval_instr inst env num) in
         eval_block tail env
 
+(*fonction qui évalue une instruction *)
 and eval_instr (ins : instr) (env : int Env.t) (line : int): int Env.t =
     match ins with
     | Set(_,_) -> eval_set ins env line
@@ -85,6 +94,7 @@ and eval_instr (ins : instr) (env : int Env.t) (line : int): int Env.t =
     | If(_,_,_) -> eval_if ins env line
     | While(_,_) -> eval_while ins env line
 
+(*fonction qui évalue un if *)
 and eval_if (ins : instr) (env : int Env.t) (line : int): int Env.t =
     match ins with
     | If(con, b1, b2) ->
@@ -92,6 +102,7 @@ and eval_if (ins : instr) (env : int Env.t) (line : int): int Env.t =
         else eval_block b2 env
     | _ -> failwith "Error eval If"
 
+(*fonction qui évalue un while *)
 and eval_while (ins : instr) (env : int Env.t) (line : int) = 
     match ins with
     | While(con, b) -> 
@@ -103,6 +114,7 @@ and eval_while (ins : instr) (env : int Env.t) (line : int) =
     | _ -> failwith "Error eval While"
         
 
+(*fonction principale qui évalue le program en faisant un eval_block *)
 let eval_prog (p : program) : unit =
     let env = Env.empty in
     let e = eval_block p env in ()
